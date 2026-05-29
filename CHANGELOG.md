@@ -18,6 +18,12 @@
 - 安装 `bubblewrap` 包
 - 配置 `kernel.apparmor_restrict_unprivileged_userns=0`（持久化 `/etc/sysctl.d/60-bwrap-userns.conf`）
 
+### 模型降级：注册用户使用 flash 模型
+
+- 所有已注册用户的 `ANTHROPIC_MODEL` 从 `deepseek-v4-pro[1m]` 切换为 `deepseek-v4-flash`
+- `.env` 默认模型同步更新，新用户注册时自动使用 flash
+- 管理员终端 Claude Code 不受影响（读取 `~/.claude/settings.json`，仍使用 pro 模型）
+
 ## 2026-05-28
 
 ### 移除管理员功能

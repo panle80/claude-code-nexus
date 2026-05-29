@@ -4,7 +4,7 @@ This file provides guidance to Claude Code when working with this repository.
 
 ## Project overview
 
-A web-based GUI for Claude Code CLI — Cursor-like chat experience with streaming, Markdown rendering, and multi-user isolation. React 18 + Vite 5 frontend, Express.js backend, JWT auth, SSE streaming, systemd + Nginx production stack. Runs on Ubuntu 24.04 (WSL2). Responsive design with `md:` (768px) breakpoint — drawer sidebar on mobile, inline on desktop.
+A web-based GUI for Claude Code CLI — Cursor-like chat experience with streaming, Markdown rendering, and multi-user isolation. React 18 + Vite 5 frontend, Express.js backend, JWT auth, SSE streaming, systemd + Nginx production stack. Runs on Ubuntu 24.04 (VM). Responsive design with `md:` (768px) breakpoint — drawer sidebar on mobile, inline on desktop.
 
 ## Common commands
 
@@ -37,7 +37,7 @@ Browser (HTTPS) → Nginx (:8443) → Express (:3001) → Claude CLI (spawn)
                  SSL terminate        rate-limit         HOME: home/
 ```
 
-**Deployment**: Everything runs inside WSL2 Ubuntu 24.04, managed by systemd. Nginx handles SSL termination and serves `client/dist/`. Express listens on `[::1]:3001` (IPv6 loopback, not exposed). ISP blocks 80/443 → production uses 8443 via router port mapping.
+**Deployment**: Everything runs inside a VM with Ubuntu 24.04, managed by systemd. Nginx handles SSL termination and serves `client/dist/`. Express listens on `[::1]:3001` (IPv6 loopback, not exposed). ISP blocks 80/443 → production uses 8443 via router port mapping.
 
 ## Server entry (`server/index.js`)
 
@@ -73,7 +73,7 @@ app.use("/api/files", requireAuth, skillsLimiter, filesRouter) → /, /download,
 ### Chat flow (`server/routes/chat.js`)
 - POST `/api/chat` → `validateSessionId` + `resolveSessionPath` (safeResolve-wrapped)
 - **Skill file isolation**: Before spawn, snapshots workspace file names (`workspaceBefore` Set), cleans `tmp/`, copies workspace files in, then spawns Claude with `cwd: tmp/`. After process exits, only copies back files that were NOT in the pre-chat snapshot (i.e., Claude actually created), leaving intermediate scripts (.js/.py etc.) in `tmp/` where they are cleaned on next request. This preserves original timestamps on existing workspace files and keeps `workspace/` free of build artifacts like `generate_pdf.js`.
-- Spawns `claude -p --dangerously-skip-permissions --output-format stream-json --include-partial-messages --verbose <prompt>` — prompt passed as CLI argument (not stdin) to avoid cold-start race condition where Bun binary initialization outlasts the stdin pipe; `--dangerously-skip-permissions` bypasses permission prompts in headless mode; `proc.stdin.end()` immediately after spawn
+- Spawns `claude -p --permission-mode acceptEdits --bare --output-format stream-json --include-partial-messages --verbose <prompt>` wrapped in `bwrap` sandbox — filesystem confined to user's `tmp/`, `home/`, `workspace/` only, preventing access to project source and other users' data; prompt passed as CLI argument (not stdin) to avoid cold-start race condition; `proc.stdin.end()` immediately after spawn
 - Response capped at 50MB total stdout (for document generation like PDF) and 1MB text content
 - SSE streaming with `finalize()` unified exit (prevents double-res.end race), `send()` guards `res.writableEnded`
 - `proc.kill("SIGTERM")` wrapped in try/catch
@@ -163,7 +163,7 @@ Shared marketplace: `data/skills-store/` — read-only, all users can install fr
 
 ## Key constraints
 
-- **CJK fonts**: Required for PDF/Word/PPT generating skills to render Chinese text. Install with `apt install fonts-noto-cjk` (provides Noto Sans/Serif CJK SC). In WSL2, alternatively copy Windows fonts from `C:\Windows\Fonts\` to `~/.local/share/fonts/windows/` and run `fc-cache -fv`.
+- **CJK fonts**: Required for PDF/Word/PPT generating skills to render Chinese text. Install with `apt install fonts-noto-cjk` (provides Noto Sans/Serif CJK SC).
 - **JWT_SECRET must be set** in `.env` — server refuses to start without it (`process.exit(1)`)
 - **ANTHROPIC_BASE_URL, ANTHROPIC_AUTH_TOKEN, ANTHROPIC_MODEL** (plus `_DEFAULT_HAIKU/SONNET/OPUS_MODEL`) — set in `.env` for API-compatible endpoints; code gracefully skips missing values
 - **USER_DATA_ROOT must be an absolute path** — relative paths cause `safeResolve` failures
@@ -183,9 +183,8 @@ Shared marketplace: `data/skills-store/` — read-only, all users can install fr
 ## Startup flow
 
 ```
-Windows user login → open terminal → wsl wakes WSL2 VM
-  → systemd auto-starts claude-code-nexus.service (:3001)
-  → systemd auto-starts nginx.service (:8443)
+VM boot → systemd auto-starts claude-code-nexus.service (:3001)
+       → systemd auto-starts nginx.service (:8443)
 ```
 
-Both services `systemctl enable`'d — start automatically when WSL2 VM boots.
+Both services `systemctl enable`'d — start automatically when the VM boots.

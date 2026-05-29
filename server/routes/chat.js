@@ -155,8 +155,32 @@ router.post("/", async (req, res) => {
   debugLog(rid, `spawning claude cwd=${runDir} home=${home} promptLen=${fullPrompt.length}`);
 
   // Pass prompt as argument (not stdin) — stdin pipe may race with Bun binary init on cold start
-  // --dangerously-skip-permissions: bypass all permission prompts; headless mode has no TUI for approval dialogs
-  proc = spawn(CLAUDE_PATH, [
+  // bwrap sandbox: filesystem confined to user's own dirs, kernel-level isolation
+  proc = spawn("/usr/bin/bwrap", [
+    "--ro-bind", "/usr", "/usr",
+    "--ro-bind", "/bin", "/bin",
+    "--ro-bind", "/sbin", "/sbin",
+    "--ro-bind", "/lib", "/lib",
+    "--ro-bind", "/lib64", "/lib64",
+    "--ro-bind", "/etc/alternatives", "/etc/alternatives",
+    "--ro-bind", "/etc/fonts", "/etc/fonts",
+    "--ro-bind", "/etc/ssl", "/etc/ssl",
+    "--ro-bind", "/etc/ca-certificates", "/etc/ca-certificates",
+    "--ro-bind", "/etc/resolv.conf", "/etc/resolv.conf",
+    "--proc", "/proc",
+    "--dev", "/dev",
+    "--tmpfs", "/tmp",
+    "--bind", runDir, runDir,
+    "--bind", workspacePath, workspacePath,
+    "--bind", home, home,
+    "--unshare-user",
+    "--unshare-ipc",
+    "--unshare-pid",
+    "--unshare-uts",
+    "--unshare-cgroup",
+    "--die-with-parent",
+    "--new-session",
+    CLAUDE_PATH,
     "-p",
     "--dangerously-skip-permissions",
     "--output-format", "stream-json",

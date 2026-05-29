@@ -180,10 +180,9 @@ data/users/<用户名>/
 ## 启动流程
 
 ```
-Windows 用户登录
-  → 打开终端，输入 wsl 唤醒 WSL2 VM
-    → systemd 自动启动 claude-code-nexus.service (Express :3001)
-    → systemd 自动启动 nginx.service (:8443 SSL + 静态文件)
+VM 启动
+  → systemd 自动启动 claude-code-nexus.service (Express :3001)
+  → systemd 自动启动 nginx.service (:8443 SSL + 静态文件)
 ```
 
 **部署文件：**

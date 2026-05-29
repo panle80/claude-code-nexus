@@ -1,0 +1,28 @@
+[Unit]
+Description=Claude Code Nexus — Web GUI Backend
+After=network.target
+
+[Service]
+Type=simple
+User=panle
+WorkingDirectory=/home/panle/web
+Environment=NODE_ENV=production
+Environment=PORT=3001
+EnvironmentFile=/home/panle/web/.env
+ExecStartPre=/bin/mkdir -p /home/panle/web/logs /home/panle/web/data
+ExecStart=/usr/bin/node /home/panle/web/server/index.js
+Restart=always
+RestartSec=5
+MemoryMax=500M
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=claude-code-nexus
+
+# Security hardening
+NoNewPrivileges=yes
+ProtectHome=no
+ProtectSystem=strict
+ReadWritePaths=/home/panle/web/data /home/panle/web/logs /tmp /var/tmp
+
+[Install]
+WantedBy=multi-user.target

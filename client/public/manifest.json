@@ -1,0 +1,13 @@
+{
+  "name": "Claude Code Nexus",
+  "short_name": "CCN",
+  "description": "基于 Claude Code CLI 的 Web 聊天界面",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#141413",
+  "theme_color": "#141413",
+  "icons": [
+    { "src": "/claude-icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "/claude-logo-light.png", "sizes": "248x248", "type": "image/png" }
+  ]
+}

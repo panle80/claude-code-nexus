@@ -1,0 +1,12 @@
+node_modules/
+dist/
+data/
+.env
+.env.local
+*.log
+.DS_Store
+.claude/plans/
+.claude/worktrees/
+.claude/settings.local.json
+.claude/memory/
+claude.panle80.cn.*

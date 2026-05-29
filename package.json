@@ -1,0 +1,30 @@
+{
+  "name": "claude-code-nexus",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A web-based GUI for Claude Code CLI",
+  "scripts": {
+    "install:all": "cd server && npm install && cd ../client && npm install",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "start": "concurrently \"npm run start:server\" \"npm run start:client\"",
+    "start:server": "cd server && npm start",
+    "start:client": "cd client && npm run preview"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "pdf-parse": "^2.4.5"
+  },
+  "dependencies": {
+    "@fontsource/noto-sans-sc": "^5.2.9",
+    "@resvg/resvg-js": "^2.6.2",
+    "docx": "^9.6.1",
+    "exceljs": "^4.4.0",
+    "mammoth": "^1.12.0",
+    "noto-sans-sc": "^37.0.0",
+    "pdf-lib": "^1.17.1",
+    "pdfkit": "^0.18.0",
+    "pptxgenjs": "^4.0.1"
+  }
+}
